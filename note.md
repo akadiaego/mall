@@ -16,3 +16,5 @@ PRIMARY KEY(`id`)
 4.lua脚本很容易出现书写错误，导致使用脚本报错
 5.MQ报错出现长时间异常，RabbitMq 消费者监听生产者传来的对象出错Execution of Rabbit message listener failed. Listener threw exception ，可以直接在客户端页面删除错误的队列即可
 6.在linux启动java -jar包时，出现端口占用，查看进程：netstat -lnp|grep 8080-》Kill -9 端口号
+
+redis 5.0.14
