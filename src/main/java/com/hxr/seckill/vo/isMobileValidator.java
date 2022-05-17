@@ -9,6 +9,7 @@ import javax.validation.ConstraintValidatorContext;
 
 /**
  * 手机号码校验规则
+ * 对应传入的是注解和需要判断的类型
  */
 public class isMobileValidator implements ConstraintValidator<isMobile,String> {
 
