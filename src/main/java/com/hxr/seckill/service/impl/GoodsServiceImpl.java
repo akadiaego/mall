@@ -6,6 +6,7 @@ import com.hxr.seckill.pojo.Goods;
 import com.hxr.seckill.service.IGoodsService;
 import com.hxr.seckill.vo.GoodsVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.List;
  * @since 2022-05-16
  */
 @Service
+@Primary
 public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements IGoodsService {
 
     @Autowired
@@ -30,7 +32,17 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
      * @return
      */
     @Override
-    public List<GoodsVo> findsGoodsVo() {
+    public List<GoodsVo> findGoodsVo() {
         return goodsMapper.findGoodsVo();
+    }
+
+    /**
+     * 获取商品详情
+     * @param goodsId
+     * @return
+     */
+    @Override
+    public GoodsVo findGoodsVoByGoodsId(Long goodsId) {
+        return goodsMapper.findGoodsVoByGoodsId(goodsId);
     }
 }
