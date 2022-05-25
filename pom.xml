@@ -87,7 +87,11 @@
 			<artifactId>commons-pool2</artifactId>
 		</dependency>
 
-		<!--spring-session 依赖-->
+		<!--es 依赖-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+		</dependency>
 
 	</dependencies>
 
