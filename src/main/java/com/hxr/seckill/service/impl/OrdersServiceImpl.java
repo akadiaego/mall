@@ -18,6 +18,7 @@ import com.hxr.seckill.vo.GoodsVo;
 import com.hxr.seckill.vo.OrderDetailVo;
 import com.hxr.seckill.vo.RespBeanEnum;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,8 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
     private OrdersMapper ordersMapper;
     @Autowired
     private IGoodsService goodsService;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 秒杀
@@ -54,9 +57,12 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         SeckillGoods seckillGoods = seckillGoodsService.getOne(new QueryWrapper<SeckillGoods>()
                 .eq("goods_id", goods.getId()));
         seckillGoods.setStockCount(seckillGoods.getStockCount()-1);
-        seckillGoodsService.update(new UpdateWrapper<SeckillGoods>()
-                .set("stock_count",seckillGoods.getStockCount()).eq("id",seckillGoods.getId()).gt("stock_count",0));
+        boolean seckillGoodsResult = seckillGoodsService.update(new UpdateWrapper<SeckillGoods>()
+                .setSql("stock_count = stock_count -1").eq("goods_id",goods.getId()).gt("stock_count",0));
         //seckillGoodsService.updateById(seckillGoods);
+        if (!seckillGoodsResult){
+            return null;
+        }
         //生成订单
         Orders order = new Orders();
         order.setUserId(user.getId());
@@ -75,6 +81,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         seckillOrders.setOrderId(order.getId());
         seckillOrders.setGoodsId(goods.getId());
         seckillOrdersService.save(seckillOrders);
+        redisTemplate.opsForValue().set("order:"+user.getId()+":"+goods.getId(),seckillOrders);
         return order;
     }
 

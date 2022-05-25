@@ -11,6 +11,7 @@ import com.hxr.seckill.vo.GoodsVo;
 import com.hxr.seckill.vo.RespBean;
 import com.hxr.seckill.vo.RespBeanEnum;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +32,9 @@ public class SecKillController {
 
     @Autowired
     private IOrdersService ordersService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @RequestMapping("/doSecKill2")//583.8 before
     public String doSecKill2(Model model, User user,Long goodsId){
@@ -72,8 +76,9 @@ public class SecKillController {
         }
         //判断是否重复抢购
         //getOne方法最终得到的是 实体类对象，其结果可以通过getXXXX()方法获取对象值；
-        SeckillOrders seckillOrders = seckillOrdersService.getOne(new QueryWrapper<SeckillOrders>()
-                .eq("user_id", user.getId()).eq("goods_id", goodsId));
+//        SeckillOrders seckillOrders = seckillOrdersService.getOne(new QueryWrapper<SeckillOrders>()
+//                .eq("user_id", user.getId()).eq("goods_id", goodsId));
+        SeckillOrders seckillOrders = (SeckillOrders)redisTemplate.opsForValue().get("order:"+user.getId()+":"+goods.getId());
         if (seckillOrders!=null){
             //model.addAttribute("errMsg",RespBeanEnum.REPEAT_ERROR.getMessage());
             return RespBean.error(RespBeanEnum.REPEAT_ERROR);
