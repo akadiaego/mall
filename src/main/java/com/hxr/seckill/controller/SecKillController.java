@@ -17,6 +17,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.CollectionUtils;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +52,9 @@ public class SecKillController implements InitializingBean {
     private MQSender mqSender;
 
     private Map<Long,Boolean> EmptyStockMap = new HashMap<>();
+
+    @Autowired
+    private RedisScript<Long> script;
 
     @RequestMapping("/doSecKill2")//583.8 before
     public String doSecKill2(Model model, User user,Long goodsId){
@@ -94,7 +99,9 @@ public class SecKillController implements InitializingBean {
             return RespBean.error(RespBeanEnum.EMPTY_STOCK);
         }
         //预减库存
-        Long stock = valueOperations.decrement("seckillGoods:" + goodsId);
+//        Long stock = valueOperations.decrement("seckillGoods:" + goodsId);
+        Long stock = (Long) redisTemplate.execute(script,
+                Collections.singletonList("seckillGoods:" + goodsId), Collections.EMPTY_LIST);
         if (stock < 0){
             EmptyStockMap.put(goodsId,true);
             valueOperations.increment("seckillGoods" + goodsId);
@@ -122,6 +129,22 @@ public class SecKillController implements InitializingBean {
 //        Orders order = ordersService.seckill(user,goods);
 //        return RespBean.success(order);
 //        return null;
+    }
+
+    /**
+     * 获取秒杀结果
+     * @param user
+     * @param goodsId
+     * @return：orderId:成功，-1秒杀失败，0排队中
+     */
+    @RequestMapping(value = "/result",method = RequestMethod.GET)
+    @ResponseBody
+    public RespBean getResult(User user,Long goodsId){
+        if (user==null){
+            return RespBean.error(RespBeanEnum.SESSION_ERROR);
+        }
+        Long orderId = seckillOrdersService.getResult(user,goodsId);
+        return RespBean.success(orderId);
     }
 
     /**

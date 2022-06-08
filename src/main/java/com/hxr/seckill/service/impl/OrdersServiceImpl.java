@@ -19,6 +19,7 @@ import com.hxr.seckill.vo.OrderDetailVo;
 import com.hxr.seckill.vo.RespBeanEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,13 +55,19 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
     @Transactional
     @Override
     public Orders seckill(User user, GoodsVo goods) {
+        ValueOperations valueOperations = redisTemplate.opsForValue();
         SeckillGoods seckillGoods = seckillGoodsService.getOne(new QueryWrapper<SeckillGoods>()
                 .eq("goods_id", goods.getId()));
         seckillGoods.setStockCount(seckillGoods.getStockCount()-1);
         boolean seckillGoodsResult = seckillGoodsService.update(new UpdateWrapper<SeckillGoods>()
                 .setSql("stock_count = stock_count -1").eq("goods_id",goods.getId()).gt("stock_count",0));
         //seckillGoodsService.updateById(seckillGoods);
-        if (!seckillGoodsResult){
+//        if (!seckillGoodsResult){
+//            return null;
+//        }
+        if (seckillGoods.getStockCount() < 1){
+            //判断是否还有库存
+            valueOperations.set("isStockEmpty:"+goods.getId(),"0");
             return null;
         }
         //生成订单

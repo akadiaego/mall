@@ -120,7 +120,8 @@
             success:function(data){
                 console.log(data.code)
                 if(data.code==200){
-                    window.location.href="/ordersDetail.html?orderId="+data.obj.id
+                    // window.location.href="/ordersDetail.html?orderId="+data.obj.id
+                    getResult($("#goodsId").val());
                 }else if(data.code==500501){
                     layer.msg("商品限购一件")
                 }else{
@@ -129,6 +130,42 @@
             },
             error:function(){
                 layer.msg("客户端请求出错")
+            }
+
+        })
+    }
+
+    function getResult(goodsId) {
+        g_showLoading();
+        $.ajax({
+            url:"/secKill/result",
+            type:"GET",
+            data:{
+                goodsId:goodsId,
+            },
+            success:function (data) {
+                if (data.code == 200){
+                    var result = data.obj;
+                    if (result<0){
+                        layer.msg("对不起，秒杀失败！")
+                    }else if (result == 0){
+                        //排队中，轮询
+                        setTimeout(function () {
+                            getResult(goodsId);
+                        },50);
+                    }else{
+                        layer.confirm("恭喜您，秒杀成功！查看订单？",{btn:["确定","取消"]},
+                        function () {
+                           window.location.href="/ordersDetail.html?orderId="+result;
+                        },
+                        function () {
+                            layer.close();
+                        })
+                    }
+                }
+            },
+            error:function () {
+                layer.msg("客户端请求错误")
             }
 
         })
