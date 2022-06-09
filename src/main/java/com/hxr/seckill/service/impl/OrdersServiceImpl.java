@@ -14,6 +14,8 @@ import com.hxr.seckill.service.IGoodsService;
 import com.hxr.seckill.service.IOrdersService;
 import com.hxr.seckill.service.ISeckillGoodsService;
 import com.hxr.seckill.service.ISeckillOrdersService;
+import com.hxr.seckill.utils.MD5Util;
+import com.hxr.seckill.utils.UUIDUtil;
 import com.hxr.seckill.vo.GoodsVo;
 import com.hxr.seckill.vo.OrderDetailVo;
 import com.hxr.seckill.vo.RespBeanEnum;
@@ -22,8 +24,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Date;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -103,5 +108,32 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         detail.setOrder(order);
         detail.setGoodsVo(goodsVo);
         return detail;
+    }
+
+    /**
+     * 获取秒杀地址
+     * @param user
+     * @param goodsId
+     * @return
+     */
+    @Override
+    public String createPath(User user, Long goodsId) {
+        String str = MD5Util.md5(UUIDUtil.uuid() + "123456");
+        redisTemplate.opsForValue().set("seckillPath:"+user.getId()+":"+goodsId,str,60, TimeUnit.SECONDS);
+        return str;
+    }
+    /**
+     * 校验秒杀地址
+     * @param user
+     * @param goodsId
+     * @return
+     */
+    @Override
+    public boolean checkPath(User user, Long goodsId, String path) {
+        if (user == null||goodsId<0|| StringUtils.isEmpty(path)){
+            return false;
+        }
+        String redisPath = ((String) redisTemplate.opsForValue().get("seckillPath:" + user.getId() + ":" + goodsId));
+        return path.equals(redisPath);
     }
 }
