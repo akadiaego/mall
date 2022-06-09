@@ -44,10 +44,19 @@
             <td>
 <!--                <form id="secKillForm" method="post" action="/secKill/doSecKill">-->
 <!--                    <input type="hidden" name="goodsId" id="goodsId">-->
-                    <button class="btn btn-primary btn-block" type="submit" id="buyButton" onclick="getSeckillPath()">立即秒杀
-                        <input type="hidden" name="goodsId" id="goodsId">
-                    </button>
+<!--                    <button class="btn btn-primary btn-block" type="submit" id="buyButton" onclick="getSeckillPath()">立即秒杀-->
+<!--                        <input type="hidden" name="goodsId" id="goodsId">-->
+<!--                    </button>-->
 <!--                </form>-->
+                <div class="row">
+                    <div class="form-inline">
+                        <img id="captchaImg" width="130" height="32" onclick="refreshCaptcha()"  style="display: none"/>
+                        <input id="captcha" class="form-control"  style="display: none">
+                        <button class="btn btn-primary btn-block" type="button" id="buyButton" onclick="getSeckillPath()">立即秒杀
+                            <input type="hidden" name="goodsId" id="goodsId">
+                        </button>
+                    </div>
+                </div>
             </td>
 <!--            <td>-->
         </tr>
@@ -70,6 +79,10 @@
     $(function(){
         getDetails();
     });
+
+    function refreshCaptcha(){
+        $("#captchaImg").attr("src","/secKill/captcha?goodsId="+$("#goodsId").val() + "&time=" + new Date());
+    }
     function getDetails() {
         var goodsId = g_getQueryString("goodsId");
         console.log(goodsId);
@@ -104,6 +117,7 @@
         $("#goodsImg").attr("src",goods.goodsImg);
         $("#startTime").text(new Date(goods.startDate).format("yyyy-MM-dd HH:mm:ss"));
         $("#goodsId").val(goods.id);
+        $("#remainSeconds").val(remainSeconds);
         $("#goodsPrice").text(goods.goodsPrice);
         $("#seckillPrice").text(goods.seckillPrice);
         $("#stockCount").text(goods.stockCount);
@@ -111,12 +125,14 @@
     }
     function getSeckillPath() {
         var goodsId = $("#goodsId").val();
+        var captcha = $("#captcha").val();
         g_showLoading();
         $.ajax({
             url:"secKill/path",
             type:"GET",
             data:{
-                goodsId:goodsId
+                goodsId: goodsId,
+                captcha: captcha
             },
             success:function (data) {
                 if(data.code==200){
@@ -194,6 +210,7 @@
     function countDown(){
         $('#buyButton').attr("disabled",true);
         var remainSeconds = $("#remainSeconds").val();
+        console.log(remainSeconds);
         var timeout;
         //秒杀未开始
         if(remainSeconds>0){
@@ -202,17 +219,22 @@
                 $("#remainSeconds").val(remainSeconds-1);
                 countDown();
             },1000);//每1s减1s
-            debugger
         }else if(remainSeconds==0){
             //秒杀进行中
             $('#buyButton').attr("disabled",false);
             if(timeout){
                 clearTimeout(timeout);
             }
-            $("#seckillTip").html("秒杀进行中")
+            $("#seckillTip").html("秒杀进行中");
+            $("#captchaImg").attr("src","/secKill/captcha?goodsId="+$("#goodsId").val() + "&time=" + new Date());
+            $("#captchaImg").show();
+            $("#captcha").show();
         }else{
-            $('#buyButton').attr("disabled",true);
-            $("#seckillTip").html("秒杀已结束")
+            console.log(remainSeconds)
+            $("#buyButton").attr("disabled",true);
+            $("#seckillTip").html("秒杀已结束");
+            $("#captchaImg").hide();
+            $("#captcha").hide();
         }
     };
 </script>
