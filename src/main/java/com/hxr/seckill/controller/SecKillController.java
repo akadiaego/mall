@@ -1,6 +1,7 @@
 package com.hxr.seckill.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.hxr.seckill.config.AccessLimit;
 import com.hxr.seckill.exception.GlobalException;
 import com.hxr.seckill.pojo.Orders;
 import com.hxr.seckill.pojo.SeckillMessage;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
@@ -165,9 +167,10 @@ public class SecKillController implements InitializingBean {
      * @param goodsId
      * @return
      */
+    @AccessLimit(second = 5,maxCount = 5,needLogin = true)
     @RequestMapping(value = "/path",method = RequestMethod.GET)
     @ResponseBody
-    public RespBean getPath(User user,Long goodsId,String captcha){
+    public RespBean getPath(User user, Long goodsId, String captcha, HttpServletRequest request){
         if (user==null){
             return RespBean.error(RespBeanEnum.SESSION_ERROR);
         }
